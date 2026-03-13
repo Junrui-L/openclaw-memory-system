@@ -1,0 +1,75 @@
+# 记忆管理系统配置文件
+# 互补架构：新框架作为双记忆系统的自动化工具层
+
+# ========== 基础路径 ==========
+paths:
+  workspace: "/home/node/.openclaw/workspace"
+  memory: "/home/node/.openclaw/workspace/memory"           # 日记层（双记忆系统-只读）
+  self_improving: "/home/node/.openclaw/workspace/self-improving"  # 身份层
+  learnings: "/home/node/.openclaw/workspace/.learnings"    # 任务层
+  memory_md: "/home/node/.openclaw/workspace/MEMORY.md"     # 长期记忆
+  reports: "/home/node/.openclaw/workspace/reports"         # 报告层（新框架）
+  archive: "/home/node/.openclaw/workspace/archive"         # 归档层（新框架）
+  backup: "/home/node/.openclaw/workspace/.backup"          # 备份层（新框架）
+  positions: "/home/node/.openclaw/workspace/.positions"    # 位置记录（新框架）
+  logs: "/home/node/.openclaw/workspace/logs"
+
+# ========== 归档配置 ==========
+archive:
+  retention_days: 7                    # 7天后归档
+  incremental: true                    # 启用增量归档
+  compress: false                      # 是否压缩归档文件
+
+# ========== 备份配置 ==========
+backup:
+  enabled: true
+  daily: true                          # 每日备份
+  weekly: true                         # 每周备份
+  retention_daily: 7                   # 保留7天每日备份
+  retention_weekly: 4                  # 保留4周每周备份
+  weekly_day: 0                        # 周日进行周备份
+
+# ========== 报告配置 ==========
+reports:
+  morning:
+    enabled: true
+    hour: 8                            # 早上8点生成
+    send_feishu: true                  # 发送到飞书
+  health:
+    enabled: true
+    hour: 4                            # 凌晨4点检查
+    send_alert: true                   # 发送告警
+
+# ========== 通知配置 ==========
+notification:
+  feishu:
+    enabled: true
+    channel: "feishu"
+    target: "oc_f55bc4b692dd99d18ba8b46d73e902cb"  # 默认发送到记忆管理群组
+    morning_report: true
+    health_alert: true
+
+# ========== 智能待办 ==========
+todo:
+  smart_priority: true
+  high_keywords: ["紧急", "重要", "critical", "urgent", "必须", "立即"]
+  medium_keywords: ["建议", "todo", "应该", "需要", "考虑"]
+
+# ========== 磁盘阈值 ==========
+disk:
+  warning: 80
+  critical: 90
+  log_size_threshold: "100M"
+
+# ========== 索引配置 ==========
+index:
+  enabled: true
+  max_keywords: 5
+  auto_generate: true
+
+# ========== 日志配置 ==========
+logging:
+  level: "INFO"                        # DEBUG/INFO/WARNING/ERROR
+  max_bytes: 10485760                  # 10MB，单日志文件最大大小
+  backup_count: 5                      # 保留5个备份文件
+  format: "[{timestamp}] {level}: {message}"

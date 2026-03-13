@@ -1,0 +1,65 @@
+{
+  "paths": {
+    "workspace": "/home/node/.openclaw/workspace",
+    "memory": "/home/node/.openclaw/workspace/memory",
+    "self_improving": "/home/node/.openclaw/workspace/self-improving",
+    "learnings": "/home/node/.openclaw/workspace/.learnings",
+    "memory_md": "/home/node/.openclaw/workspace/MEMORY.md",
+    "reports": "/home/node/.openclaw/workspace/reports",
+    "archive": "/home/node/.openclaw/workspace/archive",
+    "backup": "/home/node/.openclaw/workspace/.backup",
+    "positions": "/home/node/.openclaw/workspace/.positions",
+    "logs": "/home/node/.openclaw/workspace/logs"
+  },
+  "archive": {
+    "retention_days": 7,
+    "incremental": true,
+    "compress": false
+  },
+  "backup": {
+    "enabled": true,
+    "daily": true,
+    "weekly": true,
+    "retention_daily": 7,
+    "retention_weekly": 4,
+    "weekly_day": 0
+  },
+  "reports": {
+    "morning": {
+      "enabled": true,
+      "hour": 8,
+      "send_feishu": false
+    },
+    "health": {
+      "enabled": true,
+      "hour": 4,
+      "send_alert": false
+    }
+  },
+  "notification": {
+    "feishu": {
+      "enabled": false,
+      "channel": "feishu",
+      "morning_report": false,
+      "health_alert": false
+    }
+  },
+  "todo": {
+    "smart_priority": true,
+    "high_keywords": ["紧急", "重要", "critical", "urgent", "必须", "立即"],
+    "medium_keywords": ["建议", "todo", "应该", "需要", "考虑"]
+  },
+  "disk": {
+    "warning": 80,
+    "critical": 90,
+    "log_size_threshold": "100M"
+  },
+  "index": {
+    "enabled": true,
+    "max_keywords": 5,
+    "auto_generate": true
+  },
+  "logging": {
+    "level": "INFO"
+  }
+}
