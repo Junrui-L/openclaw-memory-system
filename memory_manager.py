@@ -146,9 +146,49 @@ def cmd_daily(config, args):
     print("📅 执行每日归档...")
     print("=" * 50)
     
+    # 1. 执行记忆归档
     from modules.archiver import Archiver
     archiver = Archiver(config)
     archiver.daily_archive(config, args)
+    
+    # 2. 自动提取 Sessions（使用增强版）
+    print("\n🔄 自动提取 Sessions...")
+    if V3_AVAILABLE:
+        # 1. 首先生成优化版格式化日志（去除冗余）
+        try:
+            from modules.session_extractor_optimized import SessionExtractorOptimized
+            extractor_opt = SessionExtractorOptimized(config)
+            extractor_opt.auto_extract()
+            print("✅ 优化版日志已生成（去除冗余）")
+        except Exception as e:
+            print(f"⚠️ 优化版日志生成失败: {e}")
+            # 降级到标准格式化版
+            try:
+                from modules.session_extractor_formatted import SessionExtractorFormatted
+                extractor_fmt = SessionExtractorFormatted(config)
+                extractor_fmt.auto_extract()
+                print("✅ 标准格式化日志已生成")
+            except Exception as e2:
+                print(f"⚠️ 标准日志也失败: {e2}")
+        
+        # 2. 然后合并到记忆文件（统一版）
+        try:
+            from modules.session_extractor_unified import SessionExtractorUnified
+            extractor = SessionExtractorUnified(config)
+            extractor.auto_extract_and_merge(format_type="conversation")
+            print("✅ Sessions 已合并到记忆文件")
+        except Exception as e:
+            print(f"⚠️ Sessions 合并失败: {e}")
+            # 降级到原版
+            try:
+                from modules.session_extractor import SessionExtractor
+                extractor = SessionExtractor(config)
+                extractor.auto_extract_and_merge()
+                print("✅ Sessions 合并完成（降级模式）")
+            except Exception as e2:
+                print(f"⚠️ 降级合并也失败: {e2}")
+    else:
+        print("⚠️ v3.0 模块不可用，跳过 Sessions 提取")
     
     print("=" * 50)
     print("✅ 每日归档完成")
@@ -250,24 +290,130 @@ def cmd_status(config, args):
 
 
 def cmd_session_merge(config, args):
-    """Session 合并命令 (v3.0)"""
-    print("🔄 Session 合并...")
+    """Session 合并命令 (v3.0) - 支持优化版输出"""
+    print("🔄 Session 提取与合并...")
     print("=" * 50)
     
     if not V3_AVAILABLE:
         print("❌ v3.0 模块不可用")
         return
     
-    from modules.session_extractor import SessionExtractor
-    extractor = SessionExtractor(config)
+    # 获取输出模式
+    output_mode = getattr(args, 'output', 'memory')
+    # 获取日志类型
+    log_type = getattr(args, 'log_type', 'optimized')
     
-    if args.date:
-        extractor.merge_to_daily_memory(args.date)
+    if output_mode == 'log':
+        # 仅生成日志
+        if log_type == 'optimized':
+            # 优化版（去除冗余）
+            try:
+                from modules.session_extractor_optimized import SessionExtractorOptimized
+                extractor = SessionExtractorOptimized(config)
+                
+                if args.date:
+                    extractor.write_optimized_log(args.date)
+                else:
+                    extractor.auto_extract()
+                
+                print("=" * 50)
+                print("✅ 优化版日志已生成（去除冗余）")
+                
+            except Exception as e:
+                print(f"⚠️ 优化版失败: {e}")
+                # 降级到标准版
+                from modules.session_extractor_formatted import SessionExtractorFormatted
+                extractor = SessionExtractorFormatted(config)
+                if args.date:
+                    extractor.write_formatted_log(args.date)
+                else:
+                    extractor.auto_extract()
+                print("✅ 标准版日志已生成")
+        else:
+            # 标准格式化版
+            try:
+                from modules.session_extractor_formatted import SessionExtractorFormatted
+                extractor = SessionExtractorFormatted(config)
+                
+                if args.date:
+                    extractor.write_formatted_log(args.date)
+                else:
+                    extractor.auto_extract()
+                
+                print("=" * 50)
+                print("✅ 格式化日志已生成")
+                
+            except Exception as e:
+                print(f"❌ 格式化日志生成失败: {e}")
+    
+    elif output_mode == 'both':
+        # 同时生成日志和合并到记忆
+        try:
+            # 生成日志
+            if log_type == 'optimized':
+                from modules.session_extractor_optimized import SessionExtractorOptimized
+                extractor_opt = SessionExtractorOptimized(config)
+                if args.date:
+                    extractor_opt.write_optimized_log(args.date)
+                else:
+                    extractor_opt.auto_extract()
+                print("✅ 优化版日志已生成")
+            else:
+                from modules.session_extractor_formatted import SessionExtractorFormatted
+                extractor_fmt = SessionExtractorFormatted(config)
+                if args.date:
+                    extractor_fmt.write_formatted_log(args.date)
+                else:
+                    extractor_fmt.auto_extract()
+                print("✅ 标准格式化日志已生成")
+        except Exception as e:
+            print(f"⚠️ 日志生成失败: {e}")
+        
+        # 合并到记忆文件
+        try:
+            from modules.session_extractor_unified import SessionExtractorUnified
+            extractor = SessionExtractorUnified(config)
+            format_type = getattr(args, 'format', 'conversation')
+            
+            if args.date:
+                extractor.merge_to_daily_memory(args.date, format_type)
+            else:
+                extractor.auto_extract_and_merge(format_type)
+            
+            print("✅ Sessions 已合并到记忆文件")
+        except Exception as e:
+            print(f"⚠️ Sessions 合并失败: {e}")
+        
+        print("=" * 50)
+        print("✅ Session 处理完成（日志 + 记忆）")
+    
     else:
-        extractor.auto_extract_and_merge()
-    
-    print("=" * 50)
-    print("✅ Session 合并完成")
+        # 默认：仅合并到记忆（传统模式）
+        try:
+            from modules.session_extractor_unified import SessionExtractorUnified
+            extractor = SessionExtractorUnified(config)
+            format_type = getattr(args, 'format', 'conversation')
+            
+            if args.date:
+                extractor.merge_to_daily_memory(args.date, format_type)
+            else:
+                extractor.auto_extract_and_merge(format_type)
+            
+            print("=" * 50)
+            print("✅ Session 合并完成（增强版）")
+            
+        except ImportError:
+            print("⚠️ 增强版不可用，降级到标准版...")
+            from modules.session_extractor import SessionExtractor
+            extractor = SessionExtractor(config)
+            
+            if args.date:
+                extractor.merge_to_daily_memory(args.date)
+            else:
+                extractor.auto_extract_and_merge()
+            
+            print("=" * 50)
+            print("✅ Session 合并完成（标准版）")
 
 
 def cmd_session_check(config, args):
@@ -376,9 +522,18 @@ def main():
     health_parser.add_argument('--send-alert', action='store_true',
                               help='发送告警通知')
     
-    # session-merge 命令 (v3.0)
-    session_merge_parser = subparsers.add_parser('session-merge', help='合并 Sessions 到记忆 (v3.0)')
+    # session-merge 命令 (v3.0) - 增强版
+    session_merge_parser = subparsers.add_parser('session-merge', help='合并 Sessions 到记忆 (v3.0 增强版)')
     session_merge_parser.add_argument('--date', help='指定日期 (YYYY-MM-DD)，默认今天和昨天')
+    session_merge_parser.add_argument('--format', choices=['conversation', 'structured'],
+                                     default='conversation', 
+                                     help='输出格式: conversation=对话流(默认), structured=结构化')
+    session_merge_parser.add_argument('--output', choices=['memory', 'log', 'both'],
+                                     default='memory',
+                                     help='输出模式: memory=合并到记忆文件(默认), log=仅生成日志, both=同时生成日志和合并')
+    session_merge_parser.add_argument('--log-type', choices=['optimized', 'formatted'],
+                                     default='optimized',
+                                     help='日志类型: optimized=优化精简版(默认), formatted=标准格式化版')
     
     # session-check 命令 (v3.0)
     session_check_parser = subparsers.add_parser('session-check', help='检查 Session 覆盖率 (v3.0)')

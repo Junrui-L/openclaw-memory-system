@@ -7,7 +7,7 @@ REPORT_FILE="/home/node/.openclaw/workspace/reports/daily/$(date +%Y-%m-%d)-morn
 cd /home/node/.openclaw/workspace
 
 # 生成报告
-bash scripts/memory/run.sh report
+bash scripts/openclaw-memory-system/run.sh report
 
 # 发送飞书
 if [ -f "$REPORT_FILE" ]; then

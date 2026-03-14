@@ -1,0 +1,55 @@
+# OpenClaw 记忆管理系统 v3 - 定时任务配置
+# 安装: crontab crontab-v3.txt
+# 查看: crontab -l
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+HOME=/home/node
+
+# 日志目录
+LOG_DIR=/home/node/.openclaw/workspace/logs
+SCRIPT_DIR=/home/node/.openclaw/workspace/scripts/openclaw-memory-system
+
+# ========================================
+# 每日定时任务
+# ========================================
+
+# 00:30 - 每日归档 + Session提取 + 专题索引
+30 0 * * * cd $SCRIPT_DIR && python3 memory_manager.py daily >> $LOG_DIR/cron-daily.log 2>&1
+
+# 02:00 - 清理维护
+0 2 * * * cd $SCRIPT_DIR && python3 memory_manager.py maintenance >> $LOG_DIR/cron-maintenance.log 2>&1
+
+# 03:00 - 增量备份
+0 3 * * * cd $SCRIPT_DIR && python3 memory_manager.py backup >> $LOG_DIR/cron-backup.log 2>&1
+
+# 04:00 - 健康检查
+0 4 * * * cd $SCRIPT_DIR && python3 memory_manager.py health >> $LOG_DIR/cron-health.log 2>&1
+
+# 08:00 - 晨报发送
+0 8 * * * cd $SCRIPT_DIR && python3 memory_manager.py report --send-feishu >> $LOG_DIR/cron-report.log 2>&1
+
+# ========================================
+# 每周定时任务
+# ========================================
+
+# 周一 01:00 - 索引生成
+0 1 * * 1 cd $SCRIPT_DIR && python3 memory_manager.py index >> $LOG_DIR/cron-index.log 2>&1
+
+# ========================================
+# 说明
+# ========================================
+# 
+# 任务列表:
+# 1. daily (00:30)      - 每日归档 + Session提取(优化版) + 合并到记忆
+# 2. maintenance (02:00) - 清理维护 + 过期数据整理
+# 3. backup (03:00)      - 增量备份 + 数据保护
+# 4. health (04:00)      - 健康检查 + 告警通知
+# 5. report (08:00)      - 晨报生成 + 飞书发送
+# 6. index (周一 01:00)  - 索引生成 + 搜索优化
+#
+# v3 特性:
+# - 优化版 Session 提取 (去除冗余)
+# - 统一日志管理
+# - 自动降级容错
+# - 健康状态监控
