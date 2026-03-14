@@ -1,51 +1,50 @@
-# Dependencies
-node_modules/
-
 # Python
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
+*.py[cod]
+*$py.class
 *.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Backup
-.backup/
-.backup-old/
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Logs
-logs/
 *.log
+logs/
 
-# Core dumps
-core
+# Local config
+config.local.json
+config.local.yaml
 
-# OpenClaw internal
-.clawhub/
-.openclaw/
-.positions/
-
-# Reports (generated)
-reports/daily/*.md
-
-# Memory files (generated)
-memory/*.md
-
-# Self-improving (private)
-self-improving/
-
-# Learnings (private)
-.learnings/
-
-# Docker
-*.yml
-!docker-compose.yml
-
-# Images
-*.jpg
-*.png
-*.gif
-
-# Node
-package-lock.json
-package.json
+# Backup
+*.bak
+*.backup
