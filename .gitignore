@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Backup
+.backup/
+.backup-old/
+
+# Logs
+logs/
+*.log
+
+# Core dumps
+core
+
+# OpenClaw internal
+.clawhub/
+.openclaw/
+.positions/
+
+# Reports (generated)
+reports/daily/*.md
+
+# Memory files (generated)
+memory/*.md
+
+# Self-improving (private)
+self-improving/
+
+# Learnings (private)
+.learnings/
+
+# Docker
+*.yml
+!docker-compose.yml
+
+# Images
+*.jpg
+*.png
+*.gif
+
+# Node
+package-lock.json
+package.json
