@@ -1,13 +1,23 @@
-# OpenClaw Memory System v2.0
+# OpenClaw Memory System v3.0
 
-> 双记忆系统的自动化工具层
+> 双记忆系统的自动化工具层 - Python 重构版
 
 ## 简介
 
 记忆管理系统是 OpenClaw 的自动化记忆管理工具，与双记忆系统互补协作。
 
+**v3.0 重大更新**：采用 Python 混合架构，Bash 入口 + Python 核心，功能更强大，维护更便捷。
+
 ## 功能特性
 
+### v3.0 新特性
+- 🐍 **Python 混合架构** - Bash 入口 + Python 核心，最佳实践
+- 📦 **模块化设计** - 独立模块，易于维护和扩展
+- 🔧 **智能配置** - JSON/YAML 双支持，容器友好
+- 🧪 **完整测试** - 26 个单元测试，质量保证
+- 📝 **详细文档** - 架构说明 + 使用指南
+
+### 核心功能
 - 📅 **每日归档** - 自动归档昨天，整理今天
 - 🔧 **记忆维护** - 每3天整理，每7天归档
 - 📊 **智能报告** - 生成晨报，智能待办优先级
@@ -18,33 +28,107 @@
 
 ```bash
 # 查看状态
-bash scripts/memory/run.sh status
+bash run.sh status
 
 # 生成晨报
-bash scripts/memory/run.sh report
+bash run.sh report
 
 # 健康检查
-bash scripts/memory/run.sh health
+bash run.sh health
+
+# 运行测试
+bash run.sh test
 ```
+
+## 系统架构
+
+### 双记忆系统架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      双记忆系统架构                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                  数据层 (双记忆系统)                  │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  📁 memory/          🔥 self-improving/    📋 .learnings/ │
+│  │  (日记层)            (身份层)              (任务层)     │
+│  │  原始对话记录        用户偏好习惯          结构化学习   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            ↓                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              工具层 (记忆管理系统 v3.0)              │   │
+│  ├─────────────────────────────────────────────────────┤   │
+│  │  📊 读取分析 → 📈 生成报告 → 📦 归档维护 → 💾 备份   │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                            ↓                                │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │                    输出层                            │   │
+│  │  📁 reports/    📁 archive/    📁 .backup/         │   │
+│  │  每日报告       归档文件        自动备份             │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### v3.0 代码架构
+
+```
+openclaw-memory-system/
+├── run.sh                    # Bash 入口脚本
+├── memory_manager.py         # Python 核心调度
+├── config.yaml               # YAML 配置
+├── config.json               # JSON 配置
+├── requirements.txt          # Python 依赖
+├── modules/                  # 功能模块
+│   ├── __init__.py
+│   ├── reader.py            # 数据读取模块
+│   ├── reader_v3.py         # v3 读取增强
+│   ├── analyzer.py          # 分析提取模块
+│   ├── reporter.py          # 报告生成模块
+│   ├── archiver.py          # 归档维护模块
+│   ├── health.py            # 健康检查模块
+│   └── health_v3.py         # v3 健康检查
+└── tests/                    # 单元测试
+    ├── test_analyzer.py
+    ├── test_archiver.py
+    ├── test_health.py
+    └── run_tests.py
+```
+
+## 核心模块
+
+| 模块 | 功能 | 文件 |
+|------|------|------|
+| **入口** | Bash 命令转发 | `run.sh` |
+| **核心** | Python 命令调度 | `memory_manager.py` |
+| **读取** | 读取双记忆数据 | `modules/reader.py` |
+| **分析** | 分析提取内容 | `modules/analyzer.py` |
+| **报告** | 生成晨报 | `modules/reporter.py` |
+| **归档** | 归档维护 | `modules/archiver.py` |
+| **健康** | 健康检查 | `modules/health.py` |
+
+## 定时任务
+
+| 任务名 | 频率 | 时间 | 功能 |
+|--------|------|------|------|
+| memory-daily | 每天4次 | 00:00, 06:00, 12:00, 18:00 | 增量归档 |
+| memory-index | 每周1次 | 周一 01:00 | 生成索引 |
+| memory-maintenance | 每天1次 | 02:00 | 维护整理 |
+| memory-backup | 每天1次 | 03:00 | 自动备份 |
+| memory-health | 每天1次 | 04:00 | 健康检查 |
+| memory-report | 每天1次 | 08:00 | 生成晨报 |
 
 ## 文档
 
-- [详细文档](https://gist.github.com/Junrui-L/61b1041778b2f1e3c21fc00ade129c41)
+- [架构说明](./DUAL_MEMORY_ARCHITECTURE.md) - 双记忆系统详细架构
+- [GitHub 仓库](https://github.com/Junrui-L/openclaw-memory-system)
 
-## 架构
+## 版本历史
 
-```
-scripts/memory/
-├── run.sh              # Bash入口
-├── memory_manager.py   # Python核心
-├── config.yaml         # 配置文件
-└── modules/            # 功能模块
-    ├── reader.py       # 数据读取
-    ├── analyzer.py     # 分析提取
-    ├── reporter.py     # 报告生成
-    ├── archiver.py     # 归档维护
-    └── health.py       # 健康检查
-```
+- **v3.0** (2026-03-14) - Python 重构版，混合架构，模块化设计
+- **v2.0** (2026-03-12) - 双记忆系统自动化工具层
 
 ## 许可证
 
