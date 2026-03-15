@@ -263,7 +263,7 @@ class Archiver:
         return True
     
     def _organize_long_term_memory(self):
-        """整理长期记忆"""
+        """整理长期记忆 - 智能合并去重"""
         memory_dir = Path(self.paths.get('memory', ''))
         memory_md = Path(self.paths.get('memory_md', ''))
         
@@ -271,8 +271,28 @@ class Archiver:
             print(f"⚠️ 长期记忆文件不存在: {memory_md}")
             return
         
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        
+        # 读取现有 MEMORY.md 内容
+        try:
+            with open(memory_md, 'r', encoding='utf-8') as f:
+                existing_content = f.read()
+        except Exception as e:
+            print(f"  ❌ 无法读取 MEMORY.md: {e}")
+            return
+        
+        # 提取已存在的关键信息（用于去重）
+        existing_points = set()
+        for line in existing_content.split('\n'):
+            line = line.strip()
+            if line.startswith('- ['):
+                # 提取方括号后的内容作为去重键
+                match = line[2:].strip()
+                if match:
+                    existing_points.add(match)
+        
         # 读取最近N天的记忆
-        recent_key_points = []
+        new_key_points = []
         for i in range(self.constants.MAX_RECENT_DAYS):
             date = (datetime.now() - timedelta(days=i)).strftime('%Y-%m-%d')
             file_path = memory_dir / f"{date}.md"
@@ -284,24 +304,30 @@ class Archiver:
                     
                     # 提取关键信息（简单实现）
                     for line in content.split('\n'):
+                        line = line.strip()
                         if any(kw in line for kw in ['重要', '关键', '决定', '偏好']):
-                            recent_key_points.append(f"[{date}] {line.strip()}")
+                            point_text = line.strip()
+                            point_with_date = f"[{date}] {point_text}"
+                            # 去重检查
+                            if point_with_date not in existing_points:
+                                new_key_points.append(point_with_date)
+                                existing_points.add(point_with_date)  # 防止本次重复
                 except Exception:
                     pass
         
-        if recent_key_points:
-            print(f"  📝 提取到 {len(recent_key_points)} 条关键信息")
+        if new_key_points:
+            print(f"  📝 提取到 {len(new_key_points)} 条新关键信息")
             # 追加到 MEMORY.md
             try:
                 with open(memory_md, 'a', encoding='utf-8') as f:
-                    f.write(f"\n\n### {datetime.now().strftime('%Y-%m-%d')} 自动整理\n\n")
-                    for point in recent_key_points[:self.constants.MAX_KEY_POINTS]:  # 最多N条
+                    f.write(f"\n\n### {today_str} 自动整理\n\n")
+                    for point in new_key_points[:self.constants.MAX_KEY_POINTS]:  # 最多N条
                         f.write(f"- {point}\n")
-                print(f"  ✅ 已更新长期记忆")
+                print(f"  ✅ 已更新长期记忆（新增 {len(new_key_points[:self.constants.MAX_KEY_POINTS])} 条）")
             except Exception as e:
                 print(f"  ❌ 更新失败: {e}")
         else:
-            print(f"  ℹ️ 无关键信息需要整理")
+            print(f"  ℹ️ 无新关键信息需要整理")
     
     def _archive_old_memories(self):
         """归档旧记忆"""

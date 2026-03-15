@@ -18,7 +18,8 @@ class SessionExtractorOptimized:
     def __init__(self, config: Dict):
         self.config = config
         self.sessions_dir = Path("/home/node/.openclaw/agents/main/sessions")
-        self.logs_dir = Path(config.get('paths', {}).get('logs', '/home/node/.openclaw/workspace/logs'))
+        # session-daily 文件放在 memory/ 目录下，可被 memory_search 搜索
+        self.memory_dir = Path(config.get('paths', {}).get('memory', '/home/node/.openclaw/workspace/memory'))
     
     def sanitize_text(self, text: str) -> str:
         """清理文本，去除冗余"""
@@ -96,31 +97,41 @@ class SessionExtractorOptimized:
         return key_messages
     
     def format_session(self, session: Dict) -> str:
-        """格式化 session"""
+        """格式化 session - 按指定格式输出"""
         lines = []
         lines.append(f"## Session: {session['session_id']}")
         lines.append("")
-        
+
         # 提取关键消息
         messages = self.extract_key_messages(session['messages'])
-        
+
         if not messages:
             lines.append("*无有效对话内容*")
             return '\n'.join(lines)
-        
-        lines.append(f"**对话记录** ({len(messages)} 条关键消息):")
+
+        # 按指定格式组织内容
+        lines.append("### 💬 详细对话记录")
         lines.append("")
-        
-        for msg in messages[:15]:
+
+        for msg in messages[:20]:  # 增加到20条
             if msg['role'] == 'user':
-                lines.append(f"👤 **用户**: {msg['content'][:120]}")
+                lines.append(f"**👤 用户**: {msg['content'][:200]}")  # 增加长度限制
             else:
-                lines.append(f"🤖 **助手**: {msg['content'][:150]}")
+                lines.append(f"**🤖 助手**: {msg['content'][:250]}")
             lines.append("")
-        
-        if len(messages) > 15:
-            lines.append(f"*... 还有 {len(messages) - 15} 条 ...*")
-        
+
+        if len(messages) > 20:
+            lines.append(f"*... 还有 {len(messages) - 20} 条消息 ...*")
+            lines.append("")
+
+        # 添加对话主题摘要
+        lines.append("### 📝 对话主题摘要")
+        lines.append("")
+        user_msgs = [m['content'][:50] for m in messages if m['role'] == 'user'][:3]
+        if user_msgs:
+            lines.append(f"主要话题: {' | '.join(user_msgs)}")
+        lines.append("")
+
         return '\n'.join(lines)
     
     def read_session_file(self, file_path: Path, target_date: str) -> Optional[Dict]:
@@ -197,32 +208,33 @@ class SessionExtractorOptimized:
         return sessions
     
     def write_optimized_log(self, date: str) -> bool:
-        """写入优化后的日志"""
+        """写入优化后的日志到 memory/ 目录，可被 memory_search 搜索"""
         sessions = self.extract_daily_sessions(date)
         if not sessions:
             print(f"ℹ️ {date} 无 sessions")
             return True
-        
+
         # 生成日志
         log_content = []
-        log_content.append(f"# 📅 {date} - Session 日志（优化版）")
+        log_content.append(f"# 📅 {date} - Sessions 对话记录")
         log_content.append("")
         log_content.append(f"**生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        log_content.append(f"**Sessions**: {len(sessions)}")
-        log_content.append(f"**模式**: 去除冗余，保留关键")
-        log_content.append("=" * 60)
+        log_content.append(f"**Sessions 数量**: {len(sessions)}")
+        log_content.append(f"**类型**: 优化精简版（去除冗余，保留关键对话）")
         log_content.append("")
-        
+        log_content.append("---")
+        log_content.append("")
+
         for session in sessions:
             log_content.append(self.format_session(session))
             log_content.append("")
-            log_content.append("-" * 60)
+            log_content.append("---")
             log_content.append("")
-        
-        # 写入
-        log_file = self.logs_dir / f"session-daily-{date}.md"
+
+        # 写入 memory/ 目录，可被 memory_search 搜索
+        log_file = self.memory_dir / f"session-daily-{date}.md"
         try:
-            self.logs_dir.mkdir(parents=True, exist_ok=True)
+            self.memory_dir.mkdir(parents=True, exist_ok=True)
             log_file.write_text('\n'.join(log_content), encoding='utf-8')
             print(f"✅ 优化日志已写入: {log_file}")
             return True
@@ -253,7 +265,7 @@ if __name__ == '__main__':
     
     config = {
         'paths': {
-            'logs': '/home/node/.openclaw/workspace/logs'
+            'memory': '/home/node/.openclaw/workspace/memory'
         }
     }
     

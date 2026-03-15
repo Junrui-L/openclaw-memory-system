@@ -142,43 +142,35 @@ def setup_logging(config: dict) -> logging.Logger:
 
 
 def cmd_daily(config, args):
-    """每日归档命令"""
+    """每日归档命令 - v3.1 更新版"""
     print("📅 执行每日归档...")
     print("=" * 50)
-    
+
     # 1. 执行记忆归档
     from modules.archiver import Archiver
     archiver = Archiver(config)
     archiver.daily_archive(config, args)
-    
-    # 2. 自动提取 Sessions（使用增强版）
+
+    # 2. 自动提取 Sessions（新逻辑）
     print("\n🔄 自动提取 Sessions...")
     if V3_AVAILABLE:
-        # 1. 首先生成优化版格式化日志（去除冗余）
+        # 步骤 1: 生成详细对话记录到 session-daily-*.md（可被 memory_search 搜索）
         try:
             from modules.session_extractor_optimized import SessionExtractorOptimized
             extractor_opt = SessionExtractorOptimized(config)
             extractor_opt.auto_extract()
-            print("✅ 优化版日志已生成（去除冗余）")
+            print("✅ 详细对话记录已生成到 session-daily-*.md（可搜索）")
         except Exception as e:
-            print(f"⚠️ 优化版日志生成失败: {e}")
-            # 降级到标准格式化版
-            try:
-                from modules.session_extractor_formatted import SessionExtractorFormatted
-                extractor_fmt = SessionExtractorFormatted(config)
-                extractor_fmt.auto_extract()
-                print("✅ 标准格式化日志已生成")
-            except Exception as e2:
-                print(f"⚠️ 标准日志也失败: {e2}")
-        
-        # 2. 然后合并到记忆文件（统一版）
+            print(f"⚠️ 详细对话记录生成失败: {e}")
+
+        # 步骤 2: 只记录统计摘要到 YYYY-MM-DD.md（不再包含详细对话）
         try:
             from modules.session_extractor_unified import SessionExtractorUnified
             extractor = SessionExtractorUnified(config)
             extractor.auto_extract_and_merge(format_type="conversation")
-            print("✅ Sessions 已合并到记忆文件")
+            print("✅ Sessions 统计摘要已记录到每日记忆")
         except Exception as e:
-            print(f"⚠️ Sessions 合并失败: {e}")
+            print(f"⚠️ Sessions 统计记录失败: {e}")
             # 降级到原版
             try:
                 from modules.session_extractor import SessionExtractor
@@ -189,9 +181,13 @@ def cmd_daily(config, args):
                 print(f"⚠️ 降级合并也失败: {e2}")
     else:
         print("⚠️ v3.0 模块不可用，跳过 Sessions 提取")
-    
+
     print("=" * 50)
     print("✅ 每日归档完成")
+    print("")
+    print("📁 输出文件:")
+    print("   - memory/YYYY-MM-DD.md (每日记忆 + Sessions 统计)")
+    print("   - memory/session-daily-YYYY-MM-DD.md (详细对话记录，可搜索)")
 
 
 def cmd_maintenance(config, args):

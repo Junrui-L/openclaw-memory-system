@@ -205,7 +205,7 @@ class ReportGenerator:
             
             # 构建命令
             cmd = [
-                'openclaw', 'message', 'send',
+                'message', 'send',
                 '--channel', 'feishu',
                 '--target', target,
                 '--message', message_text

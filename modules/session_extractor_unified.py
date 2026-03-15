@@ -302,59 +302,69 @@ class SessionExtractorUnified:
     
     def merge_to_daily_memory(self, date: str, format_type: str = "conversation") -> bool:
         """
-        合并到每日记忆 - 支持两种格式
-        
+        合并到每日记忆 - 简化版（不再写入 Sessions 详细对话记录）
+
+        注意：详细的 Sessions 对话记录现在由 SessionExtractorOptimized
+        生成到 session-daily-*.md 文件中，可被 memory_search 搜索。
+        此方法仅保留 session 统计信息到每日记忆文件。
+
         Args:
             date: 日期 (YYYY-MM-DD)
-            format_type: "structured" 或 "conversation"
+            format_type: 保留参数（不再使用）
         """
         # 提取 sessions（包含 assistant）
         sessions = self.extract_daily_sessions(date, include_assistant=True)
         if not sessions:
-            print(f"ℹ️ {date} 无 sessions 需要合并")
+            print(f"ℹ️ {date} 无 sessions 需要记录")
             return True
-        
+
         # 读取现有记忆
         memory_file = self.memory_dir / f"{date}.md"
-        existing_sessions: Set[str] = set()
-        
+        existing_content = ""
+
         if memory_file.exists():
             try:
                 existing_content = memory_file.read_text(encoding='utf-8')
-                existing_sessions = self._extract_existing_sessions(existing_content)
             except Exception as e:
                 print(f"⚠️ 读取记忆文件失败: {e}")
-        
-        # 过滤已存在的
-        new_sessions = [s for s in sessions if s['session_id'] not in existing_sessions]
-        
-        if not new_sessions:
-            print(f"✅ {date} 所有 sessions 已存在，无需合并")
-            return True
-        
-        # 生成内容
-        if format_type == "conversation":
-            merge_content = self._format_for_merge_conversation(new_sessions)
-        else:
-            merge_content = self._format_for_merge_structured(new_sessions)
-        
+
+        # 只生成统计摘要（不包含详细对话）
+        summary_content = self._format_session_summary(sessions, date)
+
         # 写入
         try:
             if memory_file.exists():
-                existing_content = memory_file.read_text(encoding='utf-8')
-                updated_content = self._append_to_memory(existing_content, merge_content)
+                updated_content = self._append_to_memory(existing_content, summary_content)
             else:
-                updated_content = self._create_new_memory(date, merge_content)
-            
+                updated_content = self._create_new_memory(date, summary_content)
+
             memory_file.parent.mkdir(parents=True, exist_ok=True)
             memory_file.write_text(updated_content, encoding='utf-8')
-            
-            print(f"✅ 已合并 {len(new_sessions)} 个 sessions 到 {memory_file}")
+
+            print(f"✅ 已记录 {len(sessions)} 个 sessions 统计到 {memory_file}")
             return True
-            
+
         except Exception as e:
-            print(f"❌ 合并失败: {e}")
+            print(f"❌ 记录失败: {e}")
             return False
+
+    def _format_session_summary(self, sessions: List[Dict], date: str) -> str:
+        """生成 session 统计摘要（不包含详细对话）"""
+        lines = ["\n### Sessions 统计\n"]
+        lines.append(f"**日期**: {date}")
+        lines.append(f"**Sessions 数量**: {len(sessions)}")
+        lines.append(f"**总消息数**: {sum(s['message_count'] for s in sessions)}")
+        lines.append("")
+        lines.append("**Session 列表**:")
+
+        for session in sessions:
+            lines.append(f"- `{session['session_id']}`: {session['summary'][:80]}...")
+
+        lines.append("")
+        lines.append(f"📄 **详细对话记录**: 见 `session-daily-{date}.md`")
+        lines.append("")
+
+        return '\n'.join(lines)
     
     def _format_for_merge_conversation(self, sessions: List[Dict]) -> str:
         """对话流格式合并"""
