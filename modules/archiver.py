@@ -302,16 +302,49 @@ class Archiver:
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
                     
-                    # 提取关键信息（简单实现）
+                    # 提取关键信息（优化版）
+                    seen_in_session = set()  # 本次会话内去重
+                    
+                    # 扩展关键词列表 - 包含聊天、技术、决策相关
+                    keywords = [
+                        # 原有关键词
+                        '重要', '关键', '决定', '偏好',
+                        # 技术相关
+                        '修复', '完成', '问题', '教训', '总结', '优化',
+                        # 聊天/对话相关
+                        '讨论', '确认', '同意', '决定', '计划', '安排',
+                        # 进展相关
+                        '进度', '状态', '结果', '效果', '成果',
+                        # 经验相关
+                        '经验', '方法', '方案', '策略', '建议',
+                    ]
+                    
                     for line in content.split('\n'):
                         line = line.strip()
-                        if any(kw in line for kw in ['重要', '关键', '决定', '偏好']):
-                            point_text = line.strip()
-                            point_with_date = f"[{date}] {point_text}"
-                            # 去重检查
-                            if point_with_date not in existing_points:
+                        
+                        # 跳过空行和已处理的行
+                        if not line or line in seen_in_session:
+                            continue
+                        
+                        # 只处理有意义的行（排除纯对话、重复助手回复）
+                        if line.startswith('**助手**') or line.startswith('**用户**'):
+                            continue
+                        
+                        # 关键词匹配
+                        if any(kw in line for kw in keywords):
+                            # 清理行内容（去除markdown标记）
+                            import re
+                            clean_line = re.sub(r'\*\*|\[|\]|#|\`', '', line).strip()
+                            if len(clean_line) < 10:  # 跳过太短的内容
+                                continue
+                            
+                            point_with_date = f"[{date}] {clean_line}"
+                            
+                            # 双重去重检查
+                            if point_with_date not in existing_points and clean_line not in seen_in_session:
                                 new_key_points.append(point_with_date)
-                                existing_points.add(point_with_date)  # 防止本次重复
+                                seen_in_session.add(clean_line)
+                                existing_points.add(point_with_date)
                 except Exception:
                     pass
         

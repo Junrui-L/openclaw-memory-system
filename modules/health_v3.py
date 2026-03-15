@@ -191,34 +191,48 @@ class HealthChecker:
             1. 最近是否有新记忆
             2. 记忆更新频率是否正常
         """
-        # 获取最近记忆
-        recent = self.reader.get_recent(1)
-        
-        if not recent:
-            return {
-                'name': '数据新鲜度',
-                'status': 'warning',
-                'message': '最近1天无记忆记录',
-                'alert': '⚠️ 数据新鲜度: 最近1天无记忆记录'
-            }
-        
-        # 检查最后更新时间
-        last_date = recent[0]['date']
+        # 直接检查今天的记忆文件是否存在
         today = datetime.now().strftime('%Y-%m-%d')
+        today_file = Path(self.paths.get('memory', '')) / f"{today}.md"
         
-        if last_date == today:
-            return {
-                'name': '数据新鲜度',
-                'status': 'ok',
-                'message': f'今天有更新 ({last_date})'
-            }
-        else:
+        if today_file.exists():
+            # 检查文件是否有内容（不只是标题）
+            content = today_file.read_text(encoding='utf-8')
+            # 检查是否有实质内容（超过标题部分）
+            lines = [l for l in content.split('\n') if l.strip() and not l.startswith('#')]
+            if len(lines) > 5:  # 有超过标题的空行
+                return {
+                    'name': '数据新鲜度',
+                    'status': 'ok',
+                    'message': f'今天有更新 ({today})'
+                }
+            else:
+                return {
+                    'name': '数据新鲜度',
+                    'status': 'warning',
+                    'message': f'今天文件存在但内容较少',
+                    'alert': '⚠️ 数据新鲜度: 今天记忆文件内容较少'
+                }
+        
+        # 检查昨天是否有文件
+        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+        yesterday_file = Path(self.paths.get('memory', '')) / f"{yesterday}.md"
+        
+        if yesterday_file.exists():
             return {
                 'name': '数据新鲜度',
                 'status': 'warning',
-                'message': f'最后更新: {last_date}',
-                'alert': f'⚠️ 数据新鲜度: 今天无更新'
+                'message': f'今天无记录，最后更新: {yesterday}',
+                'alert': '⚠️ 数据新鲜度: 今天无更新'
             }
+        
+        # 最近2天都没有
+        return {
+            'name': '数据新鲜度',
+            'status': 'warning',
+            'message': '最近1天无记忆记录',
+            'alert': '⚠️ 数据新鲜度: 最近1天无记忆记录'
+        }
     
     def _check_index_consistency(self) -> Dict:
         """
@@ -239,9 +253,14 @@ class HealthChecker:
                 'alert': '⚠️ 索引一致性: INDEX.md 不存在'
             }
         
-        # 统计 INDEX.md 中的记忆数（匹配 **2026-03-13** 或 **2026-03-13-xxx**）
+        # 统计 INDEX.md 中的记忆数（支持多种格式）
         import re
-        index_memories = len(re.findall(r'- \*\*\d{4}-\d{2}-\d{2}[^\*]*\*\*', index_content))
+        # 格式1: 表格格式 | 2026-03-13 | [2026-03-13.md](./2026-03-13.md) | Friday |
+        # 格式2: 列表格式 - **2026-03-13** 或 **2026-03-13-xxx**
+        index_memories = len(re.findall(r'\| (\d{4}-\d{2}-\d{2}) \|', index_content))
+        if index_memories == 0:
+            # 尝试旧格式
+            index_memories = len(re.findall(r'- \*\*\d{4}-\d{2}-\d{2}[^\*]*\*\*', index_content))
         
         # 统计实际记忆文件数（排除 INDEX.md 本身）
         memory_dir = Path(self.paths.get('memory', ''))

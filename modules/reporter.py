@@ -203,13 +203,37 @@ class ReportGenerator:
             # 截取前 2000 字符（飞书消息长度限制）
             message_text = content[:2000] if len(content) > 2000 else content
             
-            # 构建命令
-            cmd = [
-                'message', 'send',
-                '--channel', 'feishu',
-                '--target', target,
-                '--message', message_text
-            ]
+            # 尝试多种方式调用 message 工具
+            # 方式1: 直接使用 message 命令（如果在 PATH 中）
+            # 方式2: 使用 openclaw message 命令
+            # 方式3: 使用 Python 直接调用 message 模块
+            
+            # 先尝试方式1: 检查 message 命令是否存在
+            import shutil
+            message_cmd = shutil.which('message')
+            
+            if message_cmd:
+                cmd = [
+                    message_cmd, 'send',
+                    '--channel', 'feishu',
+                    '--target', target,
+                    '--message', message_text
+                ]
+            else:
+                # 方式2: 尝试使用 openclaw 命令
+                openclaw_cmd = shutil.which('openclaw')
+                if openclaw_cmd:
+                    cmd = [
+                        openclaw_cmd, 'message', 'send',
+                        '--channel', 'feishu',
+                        '--target', target,
+                        '--message', message_text
+                    ]
+                else:
+                    # 方式3: 降级到打印模式
+                    print(f"⚠️ 未找到 message 或 openclaw 命令")
+                    self._print_report_preview(content)
+                    return
             
             result = subprocess.run(
                 cmd,
