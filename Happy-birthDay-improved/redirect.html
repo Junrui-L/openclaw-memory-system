@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Happy-birthDay</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        h1 { margin-bottom: 10px; }
+        .url {
+            background: rgba(255,255,255,0.2);
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 18px;
+            margin: 20px 0;
+        }
+        .hint {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎂 Happy-birthDay</h1>
+    <p>生日祝福页面已部署</p>
+    <div class="url" id="url">加载中...</div>
+    <p class="hint">请在浏览器中打开上述地址</p>
+    <script>
+        // 显示当前访问地址
+        document.getElementById('url').textContent = window.location.href.replace('redirect.html', 'index.html');
+    </script>
+</body>
+</html>

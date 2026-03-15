@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Happy-birthDay - 一个精美的生日祝福页面">
+    <meta name="theme-color" content="#79a8ae">
+    <title>Happy-birthDay - 生日快乐</title>
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    
+    <!-- 样式表 -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎂</text></svg>">
+</head>
+<body>
+    <!-- 加载动画 -->
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <!-- 头像区域 -->
+    <div class="cs">
+        <img id="logo" src="images/avatar.jpg" alt="头像" loading="eager">
+    </div>
+    
+    <!-- 画布 -->
+    <canvas class="canvas"></canvas>
+    
+    <!-- 文字区域 -->
+    <div class="text">
+        <div class="text-main">Happy Birthday</div>
+        <div class="text-countdown"></div>
+    </div>
+    
+    <!-- 配置文件 -->
+    <script src="js/config.js"></script>
+    
+    <!-- 工具模块 -->
+    <script src="js/color.js"></script>
+    
+    <!-- 核心模块 -->
+    <script src="js/canvas.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/countdown.js"></script>
+    <script src="js/audio.js"></script>
+    
+    <!-- 主程序 -->
+    <script src="js/main.js"></script>
+    
+    <!-- 隐藏加载动画 -->
+    <script>
+        window.addEventListener('load', function() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.classList.add('hidden');
+                setTimeout(function() {
+                    loading.style.display = 'none';
+                }, 500);
+            }
+        });
+    </script>
+</body>
+</html>

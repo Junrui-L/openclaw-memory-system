@@ -1,0 +1,68 @@
+# ========================================
+# OpenClaw 定时任务配置 - fnOS 宿主机
+# ========================================
+# 
+# 使用方法：
+# 1. SSH 登录 fnOS: ssh jeremy@Qiliwind
+# 2. 编辑 crontab: crontab -e
+# 3. 复制以下内容粘贴进去
+# 4. 保存退出
+#
+# 注意：确保 docker 命令有权限执行
+
+# ========================================
+# 记忆管理系统 v3.0 定时任务
+# ========================================
+
+# OpenClaw 每日记忆归档 - 每天 4 次（00:00, 06:00, 12:00, 18:00）
+# 归档昨天记忆，整理今天待办
+0 0,6,12,18 * * * docker exec openclaw-gateway bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh daily >> /vol2/1000/Projects/openclaw/logs/cron-memory-daily.log 2>&1
+
+# OpenClaw 记忆维护 - 每天凌晨 2:00
+# 每3天整理长期记忆，每7天归档旧记忆
+0 2 * * * docker exec openclaw-gateway bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh maintenance >> /vol2/1000/Projects/openclaw/logs/cron-memory-maintenance.log 2>&1
+
+# OpenClaw 自动备份 - 每天凌晨 3:00
+0 3 * * * docker exec openclaw-gateway bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh backup >> /vol2/1000/Projects/openclaw/logs/cron-memory-backup.log 2>&1
+
+# OpenClaw 系统健康检查 - 每天凌晨 4:00
+# 检查三层记忆系统健康状态
+0 4 * * * docker exec openclaw-gateway bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh health >> /vol2/1000/Projects/openclaw/logs/cron-memory-health.log 2>&1
+
+# OpenClaw 每周索引 - 每周一凌晨 1:00
+# 生成记忆索引
+0 1 * * 1 docker exec openclaw-gateway bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh index >> /vol2/1000/Projects/openclaw/logs/cron-memory-index.log 2>&1
+
+# OpenClaw 每日晨报 - 每天早上 8:00
+# 生成并发送昨日记忆总结
+0 8 * * * docker exec openclaw-gateway bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh report >> /vol2/1000/Projects/openclaw/logs/cron-memory-report.log 2>&1
+
+# ========================================
+# OpenClaw 系统维护
+# ========================================
+
+# OpenClaw 镜像自动更新检查 - 每周一早上 6:00
+# 检查并更新 OpenClaw 镜像（如果有新版本）
+0 6 * * 1 cd /vol2/1000/Projects/openclaw && bash update-openclaw.sh >> /vol2/1000/Projects/openclaw/logs/cron-update.log 2>&1
+
+# ========================================
+# 定时任务说明
+# ========================================
+#
+# 时间格式: 分 时 日 月 周
+# 
+# 记忆管理系统 v3.0 任务列表:
+# 1. 00:00, 06:00, 12:00, 18:00 - memory-daily (每日归档)
+# 2. 02:00 daily              - memory-maintenance (维护)
+# 3. 03:00 daily              - memory-backup (备份)
+# 4. 04:00 daily              - memory-health (健康检查)
+# 5. 01:00 weekly (周一)      - memory-index (索引)
+# 6. 08:00 daily              - memory-report (晨报)
+#
+# 系统维护:
+# 7. 06:00 weekly (周一)      - OpenClaw 镜像更新
+#
+# 日志位置: /vol2/1000/Projects/openclaw/logs/cron-*.log
+#
+# 配置更新日期: 2026-03-14
+# 版本: v3.0

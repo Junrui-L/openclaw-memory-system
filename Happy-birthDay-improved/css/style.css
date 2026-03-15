@@ -1,0 +1,302 @@
+/* ==================== 基础样式 ==================== */
+html {
+    height: 100%;
+    font-size: 16px;
+}
+
+body {
+    font-family: "Helvetica Neue", "Luxi Sans", "DejaVu Sans", Tahoma, 
+                 "Hiragino Sans GB", "Microsoft Yahei", sans-serif;
+    background: #79a8ae;
+    color: #CFEBE4;
+    font-size: 18px;
+    line-height: 2;
+    letter-spacing: 1.2px;
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+a {
+    color: #ebf7f4;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #fff;
+}
+
+/* ==================== 渐变背景 ==================== */
+.body--ready {
+    background: -webkit-linear-gradient(top, rgb(203, 235, 219) 0%, rgb(55, 148, 192) 120%);
+    background: -moz-linear-gradient(top, rgb(203, 235, 219) 0%, rgb(55, 148, 192) 120%);
+    background: -o-linear-gradient(top, rgb(203, 235, 219) 0%, rgb(55, 148, 192) 120%);
+    background: -ms-linear-gradient(top, rgb(203, 235, 219) 0%, rgb(55, 148, 192) 120%);
+    background: linear-gradient(to bottom, rgb(203, 235, 219) 0%, rgb(55, 148, 192) 120%);
+    background-attachment: fixed;
+}
+
+/* ==================== Canvas 画布 ==================== */
+.canvas {
+    margin: 0 auto;
+    display: block;
+    touch-action: none;
+}
+
+/* ==================== 头像区域 ==================== */
+.cs {
+    width: 100%;
+    margin: 0 auto;
+    position: absolute;
+    text-align: center;
+    top: 20px;
+    z-index: 10;
+}
+
+img#logo {
+    width: 128px;
+    height: 128px;
+    background-size: cover;
+    border-radius: 50%;
+    box-shadow: 0px 0px 40px rgba(63, 81, 181, 0.72);
+    border: 3px solid #00a0ff;
+    opacity: 1;
+    margin: 0 auto;
+    transition: all 1.0s ease;
+    object-fit: cover;
+}
+
+#logo:hover {
+    box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff;
+    -webkit-box-shadow: 0 0 19px #fff;
+    transform: rotate(360deg);
+    -ms-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+}
+
+/* ==================== 文字区域 ==================== */
+.text {
+    position: fixed;
+    bottom: 80px;
+    text-align: center;
+    width: 100%;
+    font-weight: bold;
+    z-index: 10;
+    padding: 0 20px;
+}
+
+.text-main {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.text-countdown {
+    font-size: 1.5em;
+    font-family: "Courier New", monospace;
+    letter-spacing: 2px;
+}
+
+/* ==================== 音乐控制按钮 ==================== */
+.music-control {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.music-control:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+.music-control.playing {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+}
+
+.music-icon {
+    width: 20px;
+    height: 20px;
+    fill: white;
+}
+
+/* ==================== 加载动画 ==================== */
+.loading {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    transition: opacity 0.5s ease;
+}
+
+.loading.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==================== 粒子效果容器 ==================== */
+.particles-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* ==================== 响应式设计 ==================== */
+@media screen and (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+    
+    img#logo {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .text {
+        bottom: 60px;
+        padding: 0 15px;
+    }
+    
+    .text-main {
+        font-size: 1em;
+    }
+    
+    .text-countdown {
+        font-size: 1.2em;
+    }
+    
+    .canvas {
+        width: 100% !important;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 12px;
+    }
+    
+    img#logo {
+        width: 80px;
+        height: 80px;
+    }
+    
+    .text {
+        bottom: 40px;
+    }
+    
+    .music-control {
+        width: 35px;
+        height: 35px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .music-icon {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* ==================== 平板适配 ==================== */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    html {
+        font-size: 15px;
+    }
+    
+    img#logo {
+        width: 110px;
+        height: 110px;
+    }
+}
+
+/* ==================== 横屏优化 ==================== */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    img#logo {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .cs {
+        top: 10px;
+    }
+    
+    .text {
+        bottom: 30px;
+    }
+}
+
+/* ==================== 深色模式支持 ==================== */
+@media (prefers-color-scheme: dark) {
+    body {
+        background: #1a1a2e;
+    }
+}
+
+/* ==================== 减少动画偏好 ==================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    #logo:hover {
+        transform: none;
+    }
+}
+
+/* ==================== 打印样式 ==================== */
+@media print {
+    .music-control,
+    .loading {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+}
