@@ -325,6 +325,17 @@ class SessionExtractorUnified:
         if memory_file.exists():
             try:
                 existing_content = memory_file.read_text(encoding='utf-8')
+                
+                # 检查是否已经记录过 Sessions 统计（去重）
+                if "### Sessions 统计" in existing_content:
+                    # 检查是否已经包含这些 session
+                    existing_sessions = set(re.findall(r'`([a-f0-9-]+)`:', existing_content))
+                    new_sessions = {s['session_id'] for s in sessions}
+                    
+                    if existing_sessions & new_sessions:
+                        print(f"ℹ️ {date} 的 sessions 统计已存在，跳过")
+                        return True
+                    
             except Exception as e:
                 print(f"⚠️ 读取记忆文件失败: {e}")
 
