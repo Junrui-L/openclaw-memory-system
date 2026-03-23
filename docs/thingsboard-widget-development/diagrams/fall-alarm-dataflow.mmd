@@ -1,0 +1,63 @@
+```mermaid
+%% 告警生命周期数据流图
+sequenceDiagram
+    participant Sensor as 跌倒传感器
+    participant TB as ThingsBoard
+    participant RC as Rule Chain
+    participant DB as PostgreSQL
+    participant Widget as 告警卡片
+    participant User as 值班护士
+    participant Emergency as 急救服务
+    
+    %% T+0s: 检测阶段
+    rect rgb(255, 235, 238)
+    Note over Sensor,Emergency: T+0s - 检测阶段 (DETECTED)
+    Sensor->>TB: MQTT 遥测数据<br/>{fallDetected: true, location: "客厅"}
+    TB->>RC: 触发 Rule Chain
+    RC->>RC: 创建告警 (Create Alarm)
+    RC->>DB: INSERT alarm_timelines<br/>events: [{stage: "DETECTED"}]
+    RC->>Widget: 推送告警通知
+    Widget->>Widget: 显示告警卡片 (红色)
+    end
+    
+    %% T+15s: 响应阶段
+    rect rgb(255, 243, 224)
+    Note over Sensor,Emergency: T+15s - 响应阶段 (RESPONDED)
+    User->>Widget: 点击"确认告警"
+    Widget->>RC: RPC: acknowledgeAlarm()
+    RC->>DB: UPDATE events<br/>添加 {stage: "RESPONDED"}
+    RC->>Widget: 返回确认结果
+    Widget->>Widget: 更新状态为"已确认"
+    end
+    
+    %% T+30s: 处理阶段 - 呼叫急救
+    rect rgb(232, 245, 233)
+    Note over Sensor,Emergency: T+30s - 处理阶段 (HANDLING)
+    User->>Widget: 点击"呼叫急救"
+    Widget->>RC: RPC: callEmergency()
+    RC->>Emergency: 调用 120 API
+    Emergency-->>RC: 返回 callId, ETA
+    RC->>DB: UPDATE events<br/>添加 {stage: "HANDLING", event: "emergency_called"}
+    RC->>Widget: 返回呼叫结果
+    Widget->>Widget: 显示"急救已调度"
+    end
+    
+    %% T+15min: 急救到达
+    rect rgb(227, 242, 253)
+    Note over Sensor,Emergency: T+15min - 急救到达
+    Emergency->>RC:  webhook: 急救到达
+    RC->>DB: UPDATE events<br/>添加 {event: "emergency_arrived"}
+    RC->>Widget: 推送状态更新
+    end
+    
+    %% T+20min: 解决阶段
+    rect rgb(243, 229, 245)
+    Note over Sensor,Emergency: T+20min - 解决阶段 (RESOLVED)
+    User->>Widget: 点击"标记误报"
+    Widget->>RC: RPC: markAsFalseAlarm()
+    RC->>TB: Clear Alarm
+    RC->>DB: UPDATE<br/>• events: 添加 {stage: "RESOLVED"}<br/>• outcome: {status: "FALSE_ALARM"}<br/>• resolved_at: NOW()
+    RC->>Widget: 返回结果
+    Widget->>Widget: 卡片变绿 (已解决)
+    end
+```

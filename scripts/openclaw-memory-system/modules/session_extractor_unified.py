@@ -174,9 +174,19 @@ class SessionExtractorUnified:
                     try:
                         record = json.loads(line)
                         
-                        # 检查日期
+                        # 检查日期（转换为本地时间）
                         timestamp = record.get('timestamp', '')
-                        if target_date not in timestamp:
+                        if timestamp:
+                            try:
+                                dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                                local_dt = dt.astimezone()
+                                local_date = local_dt.strftime('%Y-%m-%d')
+                                if local_date != target_date:
+                                    continue
+                            except:
+                                if target_date not in timestamp:
+                                    continue
+                        else:
                             continue
                         
                         record_type = record.get('type', '')

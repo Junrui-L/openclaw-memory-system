@@ -1,0 +1,48 @@
+```mermaid
+%% Rule Chain 节点连接图
+flowchart LR
+    subgraph DeviceRC["Device-Processing-RC"]
+        Input1["Input<br/>接收设备消息"]
+        Switch["Message Type Switch"]
+        Process["设备数据处理<br/>• 验证<br/>• 转换<br/>• 存储"]
+        CheckAlarm{"Check Need Alarm<br/>需要告警处理?"}
+        Forward["Rule Chain 转发<br/>Target: Alarm-RC"]
+        Other["其他处理"]
+        
+        Input1 --> Switch
+        Switch -->|Post Telemetry| Process
+        Process --> CheckAlarm
+        CheckAlarm -->|是| Forward
+        CheckAlarm -->|否| Other
+    end
+    
+    subgraph AlarmRC["Alarm-Timeline-RC"]
+        Input2["Input<br/>接收转发消息"]
+        Parse["Parse Message<br/>解析消息"]
+        CreateAlarm["Create Alarm<br/>创建系统告警"]
+        SaveTimeline["Save Timeline<br/>保存时间线"]
+        REST["REST API<br/>调用自定义服务"]
+        Postgres[("PostgreSQL<br/>alarm_timelines")]
+        
+        Input2 --> Parse
+        Parse --> CreateAlarm
+        CreateAlarm --> SaveTimeline
+        SaveTimeline --> REST
+        REST --> Postgres
+    end
+    
+    Forward -.->|"转发消息"| Input2
+    
+    %% 样式
+    classDef start fill:#e3f2fd,stroke:#1565c0,stroke-width:3px
+    classDef process fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef decision fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef forward fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef storage fill:#e0f2f1,stroke:#00695c,stroke-width:2px
+    
+    class Input1,Input2 start
+    class Switch,Process,Parse,CreateAlarm,SaveTimeline,Other process
+    class CheckAlarm decision
+    class Forward,REST forward
+    class Postgres storage
+```

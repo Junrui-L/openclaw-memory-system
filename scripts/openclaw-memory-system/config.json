@@ -28,7 +28,7 @@
     "morning": {
       "enabled": true,
       "hour": 8,
-      "send_feishu": false
+      "send_feishu": true
     },
     "health": {
       "enabled": true,
@@ -38,10 +38,11 @@
   },
   "notification": {
     "feishu": {
-      "enabled": false,
+      "enabled": true,
       "channel": "feishu",
-      "morning_report": false,
-      "health_alert": false
+      "morning_report": true,
+      "health_alert": true,
+      "target": "oc_f55bc4b692dd99d18ba8b46d73e902cb"
     }
   },
   "todo": {

@@ -1,0 +1,254 @@
+{
+  "ruleChain": {
+    "name": "Fall Detector Alarm Rule Chain",
+    "type": "CORE",
+    "firstRuleNodeId": null,
+    "root": false,
+    "debugMode": false,
+    "configuration": null,
+    "additionalInfo": {
+      "description": "跌倒检测告警处理规则链"
+    }
+  },
+  "metadata": {
+    "version": 5,
+    "firstNodeIndex": 0,
+    "nodes": [
+      {
+        "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
+        "name": "Message Type Switch",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 0,
+        "configuration": {
+          "version": 0
+        },
+        "additionalInfo": {
+          "description": "消息类型路由",
+          "layoutX": 50,
+          "layoutY": 300
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "name": "Device Profile Node",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "persistAlarmRulesState": false,
+          "fetchAlarmRulesStateOnStart": false
+        },
+        "additionalInfo": {
+          "description": "处理设备配置文件的告警规则",
+          "layoutX": 300,
+          "layoutY": 300
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Fall Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "alarmType": "FALL_DETECTED",
+          "alarmSeverity": "CRITICAL",
+          "alarmDetailsBuildJs": "var details = {};\nif (msg.fallImpact) details.fallImpact = msg.fallImpact;\nif (msg.fallDuration) details.fallDuration = msg.fallDuration;\nreturn details;",
+          "useMetadataAlarmData": false,
+          "propagateToTenant": true,
+          "propagateToOwner": true,
+          "propagateToRelated": false,
+          "propagateAlarmOnlyToRelatedEntities": false
+        },
+        "additionalInfo": {
+          "description": "创建跌倒检测告警",
+          "layoutX": 550,
+          "layoutY": 150
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Resident Still Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "alarmType": "RESIDENT_STILL",
+          "alarmSeverity": "CRITICAL",
+          "alarmDetailsBuildJs": "var details = {};\nif (msg.stillAfterFallTime) details.stillAfterFallTime = msg.stillAfterFallTime;\nreturn details;",
+          "useMetadataAlarmData": false,
+          "propagateToTenant": true,
+          "propagateToOwner": true,
+          "propagateToRelated": false,
+          "propagateAlarmOnlyToRelatedEntities": false
+        },
+        "additionalInfo": {
+          "description": "创建跌倒后驻留告警",
+          "layoutX": 550,
+          "layoutY": 250
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Heart Rate High Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "alarmType": "HEART_RATE_HIGH",
+          "alarmSeverity": "CRITICAL",
+          "alarmDetailsBuildJs": "var details = {};\nif (msg.heartRate) details.heartRate = msg.heartRate;\nreturn details;",
+          "useMetadataAlarmData": false,
+          "propagateToTenant": true,
+          "propagateToOwner": true,
+          "propagateToRelated": false,
+          "propagateAlarmOnlyToRelatedEntities": false
+        },
+        "additionalInfo": {
+          "description": "创建心率过高告警",
+          "layoutX": 550,
+          "layoutY": 350
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Heart Rate Low Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "alarmType": "HEART_RATE_LOW",
+          "alarmSeverity": "CRITICAL",
+          "alarmDetailsBuildJs": "var details = {};\nif (msg.heartRate) details.heartRate = msg.heartRate;\nreturn details;",
+          "useMetadataAlarmData": false,
+          "propagateToTenant": true,
+          "propagateToOwner": true,
+          "propagateToRelated": false,
+          "propagateAlarmOnlyToRelatedEntities": false
+        },
+        "additionalInfo": {
+          "description": "创建心率过低告警",
+          "layoutX": 550,
+          "layoutY": 450
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbCreateAlarmNode",
+        "name": "Create Respiratory Rate Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 2,
+        "configuration": {
+          "alarmType": "RESPIRATORY_RATE_ABNORMAL",
+          "alarmSeverity": "CRITICAL",
+          "alarmDetailsBuildJs": "var details = {};\nif (msg.respiratoryRate) details.respiratoryRate = msg.respiratoryRate;\nreturn details;",
+          "useMetadataAlarmData": false,
+          "propagateToTenant": true,
+          "propagateToOwner": true,
+          "propagateToRelated": false,
+          "propagateAlarmOnlyToRelatedEntities": false
+        },
+        "additionalInfo": {
+          "description": "创建呼吸频率异常告警",
+          "layoutX": 550,
+          "layoutY": 550
+        }
+      },
+      {
+        "type": "org.thingsboard.rule.engine.action.TbClearAlarmNode",
+        "name": "Clear Fall Alarm",
+        "debugSettings": {
+          "failuresEnabled": false,
+          "allEnabled": false,
+          "allEnabledUntil": 0
+        },
+        "singletonMode": false,
+        "queueName": null,
+        "configurationVersion": 1,
+        "configuration": {
+          "alarmType": "FALL_DETECTED",
+          "alarmDetailsBuildJs": "return {};"
+        },
+        "additionalInfo": {
+          "description": "清除跌倒检测告警",
+          "layoutX": 800,
+          "layoutY": 150
+        }
+      }
+    ],
+    "connections": [
+      {
+        "fromIndex": 0,
+        "toIndex": 1,
+        "type": "Post telemetry"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 2,
+        "type": "Created Alarm"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 3,
+        "type": "Created Alarm"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 4,
+        "type": "Created Alarm"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 5,
+        "type": "Created Alarm"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 6,
+        "type": "Created Alarm"
+      },
+      {
+        "fromIndex": 1,
+        "toIndex": 7,
+        "type": "Cleared Alarm"
+      }
+    ],
+    "ruleChainConnections": null
+  }
+}

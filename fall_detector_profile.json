@@ -1,0 +1,281 @@
+{
+  "name": "Fall Detector Profile",
+  "type": "FALL_DETECTOR",
+  "transportType": "DEFAULT",
+  "provisionType": "DISABLED",
+  "description": "跌倒检测传感器设备配置文件",
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "type": "DEFAULT"
+    },
+    "alarms": [
+      {
+        "alarmType": "FALL_DETECTED",
+        "createRules": {
+          "CRITICAL": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "fallDetected"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 1,
+                  "predicate": {
+                    "operation": "EQUAL"
+                  }
+                }
+              ]
+            },
+            "alarmDetails": "跌倒检测触发，冲击力: ${fallImpact}G，持续时间: ${fallDuration}s"
+          }
+        },
+        "clearRule": {
+          "condition": {
+            "condition": [
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "fallDetected"
+                },
+                "valueType": "NUMERIC",
+                "value": 0,
+                "predicate": {
+                  "operation": "EQUAL"
+                }
+              }
+            ]
+          },
+          "alarmDetails": "跌倒状态已清除"
+        },
+        "propagate": true,
+        "propagateToOwner": true,
+        "propagateToTenant": true
+      },
+      {
+        "alarmType": "RESIDENT_STILL",
+        "createRules": {
+          "CRITICAL": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "stillAfterFallTime"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 300,
+                  "predicate": {
+                    "operation": "GREATER_OR_EQUAL"
+                  }
+                }
+              ]
+            },
+            "alarmDetails": "跌倒后驻留 ${stillAfterFallTime} 秒，可能意识丧失"
+          }
+        },
+        "clearRule": {
+          "condition": {
+            "condition": [
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "residentStatus"
+                },
+                "valueType": "STRING",
+                "value": "0",
+                "predicate": {
+                  "operation": "EQUAL"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "alarmType": "HEART_RATE_HIGH",
+        "createRules": {
+          "CRITICAL": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "heartRate"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 120,
+                  "predicate": {
+                    "operation": "GREATER_OR_EQUAL"
+                  }
+                }
+              ]
+            }
+          },
+          "HIGH": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "heartRate"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 100,
+                  "predicate": {
+                    "operation": "GREATER_OR_EQUAL"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "clearRule": {
+          "condition": {
+            "condition": [
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "heartRate"
+                },
+                "valueType": "NUMERIC",
+                "value": 100,
+                "predicate": {
+                  "operation": "LESS"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "alarmType": "HEART_RATE_LOW",
+        "createRules": {
+          "CRITICAL": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "heartRate"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 45,
+                  "predicate": {
+                    "operation": "LESS"
+                  }
+                }
+              ]
+            }
+          },
+          "HIGH": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "heartRate"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 50,
+                  "predicate": {
+                    "operation": "LESS"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "clearRule": {
+          "condition": {
+            "condition": [
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "heartRate"
+                },
+                "valueType": "NUMERIC",
+                "value": 55,
+                "predicate": {
+                  "operation": "GREATER_OR_EQUAL"
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "alarmType": "RESPIRATORY_RATE_ABNORMAL",
+        "createRules": {
+          "CRITICAL": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "respiratoryRate"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 30,
+                  "predicate": {
+                    "operation": "GREATER_OR_EQUAL"
+                  }
+                }
+              ]
+            }
+          },
+          "HIGH": {
+            "condition": {
+              "condition": [
+                {
+                  "key": {
+                    "type": "TIME_SERIES",
+                    "key": "respiratoryRate"
+                  },
+                  "valueType": "NUMERIC",
+                  "value": 8,
+                  "predicate": {
+                    "operation": "LESS_OR_EQUAL"
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "clearRule": {
+          "condition": {
+            "condition": [
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "respiratoryRate"
+                },
+                "valueType": "NUMERIC",
+                "value": 12,
+                "predicate": {
+                  "operation": "GREATER_OR_EQUAL"
+                }
+              },
+              {
+                "key": {
+                  "type": "TIME_SERIES",
+                  "key": "respiratoryRate"
+                },
+                "valueType": "NUMERIC",
+                "value": 24,
+                "predicate": {
+                  "operation": "LESS_OR_EQUAL"
+                }
+              }
+            ],
+            "predicate": "AND"
+          }
+        }
+      }
+    ]
+  }
+}

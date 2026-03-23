@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-browser-core": {
+      "name": "Agent Browser Core",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=agent-browser-core",
+      "source": "skillhub",
+      "version": "1.0.1"
+    },
+    "send-email": {
+      "name": "send-email",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=send-email",
+      "source": "skillhub",
+      "version": "1.0.1"
+    }
+  }
+}

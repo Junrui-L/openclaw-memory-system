@@ -24,6 +24,10 @@ class ReportGenerator:
     
     def generate_morning_report(self, config: Dict, args) -> str:
         """生成晨报"""
+        # 获取logger用于记录执行摘要到日志
+        import logging
+        logger = logging.getLogger('memory_manager')
+        
         today = datetime.now()
         yesterday = today - timedelta(days=1)
         
@@ -183,9 +187,13 @@ class ReportGenerator:
         except Exception as e:
             print(f"⚠️ 无法保存报告: {e}")
         
-        # 发送到飞书（如果启用）
+        # 发送到飞书（如果启用）- 只发送报告内容，不发送执行摘要
         if getattr(args, 'send_feishu', False) or self.config.get('notification', {}).get('feishu', {}).get('morning_report', False):
             self._send_to_feishu(report_content)
+        
+        # 记录执行摘要到日志（不发送到飞书）
+        report_path_str = str(report_path) if 'report_path' in locals() else f"{today_str}-morning.md"
+        logger.info(f"✅ 记忆管理系统晨报生成完成 | 日期: {today_str} | 报告文件: {report_path_str}")
         
         return report_content
     
@@ -196,58 +204,69 @@ class ReportGenerator:
         
         # 获取飞书配置
         feishu_config = self.config.get('notification', {}).get('feishu', {})
-        target = feishu_config.get('target', 'oc_f55bc4b692dd99d18ba8b46d73e902cb')  # 默认发送到记忆管理群组
+        target = feishu_config.get('target', 'user:ou_91b94503177fc52b0e233db6024d043a')  # 默认发送到用户私聊
         
         try:
-            # 使用 OpenClaw 的 message 工具发送
-            # 截取前 2000 字符（飞书消息长度限制）
-            message_text = content[:2000] if len(content) > 2000 else content
+            # 截取前 4000 字符（飞书消息长度限制较宽松）
+            message_text = content[:4000] if len(content) > 4000 else content
             
-            # 尝试多种方式调用 message 工具
-            # 方式1: 直接使用 message 命令（如果在 PATH 中）
-            # 方式2: 使用 openclaw message 命令
-            # 方式3: 使用 Python 直接调用 message 模块
+            # 方式1: 尝试使用 shell 脚本包装器（最可靠）
+            import os
+            workspace = self.config.get('paths', {}).get('workspace', '/home/node/.openclaw/workspace')
+            send_script = Path(workspace) / 'scripts' / 'send_feishu.sh'
             
-            # 先尝试方式1: 检查 message 命令是否存在
-            import shutil
-            message_cmd = shutil.which('message')
-            
-            if message_cmd:
+            if send_script.exists():
                 cmd = [
-                    message_cmd, 'send',
+                    'bash', str(send_script),
+                    target,
+                    message_text
+                ]
+                result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+                if result.returncode == 0:
+                    print(f"✅ 飞书通知已发送到: {target}")
+                    return
+            
+            # 方式2: 使用 openclaw 命令（带完整路径）
+            openclaw_paths = [
+                '/usr/local/bin/openclaw',
+                '/usr/bin/openclaw',
+                shutil.which('openclaw')
+            ]
+            
+            openclaw_cmd = None
+            for path in openclaw_paths:
+                if path and Path(path).exists():
+                    openclaw_cmd = path
+                    break
+            
+            if openclaw_cmd:
+                # 使用 env 确保环境变量正确
+                env = os.environ.copy()
+                env['PATH'] = '/usr/local/bin:/usr/bin:/bin:' + env.get('PATH', '')
+                
+                cmd = [
+                    openclaw_cmd, 'message', 'send',
                     '--channel', 'feishu',
                     '--target', target,
                     '--message', message_text
                 ]
-            else:
-                # 方式2: 尝试使用 openclaw 命令
-                openclaw_cmd = shutil.which('openclaw')
-                if openclaw_cmd:
-                    cmd = [
-                        openclaw_cmd, 'message', 'send',
-                        '--channel', 'feishu',
-                        '--target', target,
-                        '--message', message_text
-                    ]
-                else:
-                    # 方式3: 降级到打印模式
-                    print(f"⚠️ 未找到 message 或 openclaw 命令")
-                    self._print_report_preview(content)
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
+                    env=env
+                )
+                
+                if result.returncode == 0:
+                    print(f"✅ 飞书通知已发送到: {target}")
                     return
+                else:
+                    print(f"⚠️ openclaw 发送失败: {result.stderr}")
             
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
-            
-            if result.returncode == 0:
-                print(f"✅ 飞书通知已发送到: {target}")
-            else:
-                print(f"⚠️ 飞书发送失败: {result.stderr}")
-                # 降级到打印模式
-                self._print_report_preview(content)
+            # 方式3: 降级到打印模式
+            print(f"⚠️ 未找到可用的发送方式")
+            self._print_report_preview(content)
                 
         except subprocess.TimeoutExpired:
             print("⚠️ 飞书发送超时")

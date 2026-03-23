@@ -1,0 +1,58 @@
+# OpenClaw Dev 实例 - 独立部署
+# 端口: 8446
+
+version: '3.8'
+
+services:
+  openclaw-dev:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw-dev
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:15589:18789"  # dev 实例: 15589
+    expose:
+      - "18789"
+    networks:
+      - openclaw-dev-net
+    environment:
+      - NODE_ENV=production
+      - TZ=Asia/Shanghai
+      - INSTANCE_NAME=dev
+    volumes:
+      - ./config:/home/node/.openclaw
+      - ./workspace:/home/node/.openclaw/workspace
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:18789/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx-dev:
+    image: nginx:alpine
+    container_name: nginx-dev
+    restart: unless-stopped
+    ports:
+      - "8446:443"
+      - "8086:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/ssl:ro
+    networks:
+      - openclaw-dev-net
+    depends_on:
+      - openclaw-dev
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  openclaw-dev-net:
+    driver: bridge

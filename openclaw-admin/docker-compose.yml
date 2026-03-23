@@ -1,0 +1,23 @@
+# OpenClaw Admin - Web 管理界面
+version: '3.8'
+
+services:
+  openclaw-admin:
+    image: node:20-alpine
+    container_name: openclaw-admin
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    working_dir: /app
+    command: sh -c "npm install && node server.js"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - openclaw-admin-net
+
+networks:
+  openclaw-admin-net:
+    driver: bridge

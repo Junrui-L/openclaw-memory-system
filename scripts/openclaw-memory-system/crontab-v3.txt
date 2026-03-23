@@ -36,6 +36,9 @@ SCRIPT_DIR=/home/node/.openclaw/workspace/scripts/openclaw-memory-system
 # 周一 01:00 - 索引生成
 0 1 * * 1 cd $SCRIPT_DIR && python3 memory_manager.py index >> $LOG_DIR/cron-index.log 2>&1
 
+# 周五 22:00 - 学习条目升降级检查
+0 22 * * 5 cd /home/node/.openclaw/workspace && python3 scripts/promote_learnings.py >> $LOG_DIR/cron-promote.log 2>&1
+
 # ========================================
 # 说明
 # ========================================

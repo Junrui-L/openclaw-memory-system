@@ -24,14 +24,47 @@
 结束会话前：
 
 1. **归档今天的关键学习** 到 `memory/YYYY-MM-DD.md`
+   ```bash
+   bash /home/node/.openclaw/workspace/scripts/openclaw-memory-system/run.sh daily
+   ```
+
 2. **更新 self-improving 记忆** 如果用户有纠正或偏好
+   ```python
+   # 如果有纠正，自动记录
+   python3 /home/node/.openclaw/workspace/scripts/auto_self_improvement.py
+   ```
+
 3. **记录重要事件** 到 `/home/node/.openclaw/workspace/self-improving/reflections.md`
+
 4. **检查并处理 pending 学习条目** — 回顾 `.learnings/LEARNINGS.md`
+   ```bash
+   grep "Status\*\*: pending" /home/node/.openclaw/workspace/.learnings/*.md
+   ```
+
+5. **运行升降级检查** (每周五)
+   ```bash
+   python3 /home/node/.openclaw/workspace/scripts/promote_learnings.py
+   ```
+
 5. **执行自我反思** — 回答：今天学到了什么？有什么可以改进？
+   ```bash
+   # 写入反思
+   echo "### $(date '+%Y-%m-%d %H:%M') - 任务名称
+
+**CONTEXT**: 任务类型
+**REFLECTION**: 做得好的/不好的
+**LESSON**: 下次怎么做不同" >> /home/node/.openclaw/workspace/self-improving/reflections.md
+   ```
 
 **纠正记录检查**：
 - 本次会话是否有用户纠正？
 - 如果有，确保已写入 `corrections.md` 和 `LEARNINGS.md`
+
+**Self-Improvement 自动检测**：
+在每次响应后，自动检查：
+1. 用户是否说了"不对"、"错了"等纠正词 → 自动记录到 `LEARNINGS.md`
+2. 命令是否执行失败 → 自动记录到 `ERRORS.md`
+3. 用户是否请求新功能 → 自动记录到 `FEATURE_REQUESTS.md`
 
 **不用问，直接做。**
 

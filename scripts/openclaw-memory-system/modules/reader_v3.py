@@ -83,19 +83,9 @@ class MemoryReader:
         
         实际实现需使用 OpenClaw 工具调用
         """
-        # TODO: 实现实际的工具调用
-        # 目前返回空列表，需要接入 OpenClaw
-        
-        # 示例返回格式：
-        return [
-            {
-                'path': 'memory/2026-03-13.md',
-                'score': 0.85,
-                'snippet': '...',
-                'keywords': ['测试'],
-                'source': 'memory'
-            }
-        ]
+        # 实际实现需要接入 OpenClaw 工具调用
+        # 目前返回空列表，由调用方处理降级逻辑
+        return []
     
     def get(
         self, 
@@ -130,10 +120,9 @@ class MemoryReader:
         调用 OpenClaw memory_get
         
         实际实现需使用 OpenClaw 工具调用
+        当前实现：直接读取文件（降级方案）
         """
-        # TODO: 实现实际的工具调用
-        
-        # 临时实现：直接读取文件
+        # 直接读取文件（实际生产环境应接入 OpenClaw 工具调用）
         full_path = Path(self.paths.get('workspace', '')) / path
         if not full_path.exists():
             return None
@@ -292,33 +281,3 @@ class MemoryReaderV2Compat(MemoryReader):
         """兼容 v2.0"""
         recent = self.get_recent(days)
         return [r['date'] for r in recent]
-
-
-if __name__ == '__main__':
-    # 测试
-    config = {
-        'paths': {
-            'workspace': '/home/node/.openclaw/workspace',
-            'memory': '/home/node/.openclaw/workspace/memory'
-        }
-    }
-    
-    reader = MemoryReader(config)
-    
-    # 测试 search
-    print("Testing search...")
-    results = reader.search("测试", max_results=5)
-    print(f"Found {len(results)} results")
-    
-    # 测试 get
-    print("\nTesting get...")
-    content = reader.get("memory/2026-03-13.md", from_line=1, lines=10)
-    if content:
-        print(f"Read {len(content)} characters")
-    else:
-        print("File not found")
-    
-    # 测试 get_recent
-    print("\nTesting get_recent...")
-    recent = reader.get_recent(3)
-    print(f"Found {len(recent)} recent memories")

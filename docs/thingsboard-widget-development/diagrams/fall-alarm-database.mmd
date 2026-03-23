@@ -1,0 +1,70 @@
+```mermaid
+%% 数据库实体关系图 (ER图)
+erDiagram
+    TB_DEVICE ||--o{ ALARM_TIMELINES : generates
+    TB_TENANT ||--o{ ALARM_TIMELINES : owns
+    TB_RESIDENT ||--o{ ALARM_TIMELINES : triggers
+    ALARM_TIMELINES ||--o{ TB_ATTRIBUTES : cached
+    
+    TB_DEVICE {
+        string id PK "设备ID"
+        string name "设备名称"
+        string type "设备类型"
+        string tenant_id FK "租户ID"
+        string label "标签"
+        timestamp created_at "创建时间"
+    }
+    
+    TB_TENANT {
+        string id PK "租户ID"
+        string name "租户名称"
+        string email "邮箱"
+        string phone "电话"
+        timestamp created_at "创建时间"
+    }
+    
+    TB_RESIDENT {
+        string id PK "居民ID"
+        string name "姓名"
+        string device_id FK "设备ID"
+        string room_number "房间号"
+        string emergency_contact "紧急联系人"
+        timestamp created_at "创建时间"
+    }
+    
+    ALARM_TIMELINES {
+        string alarm_id PK "告警ID"
+        string tenant_id FK "租户ID"
+        string device_id FK "设备ID"
+        string resident_id FK "居民ID"
+        string resident_name "居民姓名"
+        jsonb events "时间线事件"
+        jsonb statistics "统计信息"
+        jsonb outcome "处理结果"
+        timestamp detected_at "检测时间"
+        timestamp acknowledged_at "确认时间"
+        timestamp resolved_at "解决时间"
+        timestamp created_at "创建时间"
+        timestamp updated_at "更新时间"
+    }
+    
+    TB_ATTRIBUTES {
+        string entity_id FK "实体ID"
+        string attribute_type "属性类型"
+        string attribute_key "属性键"
+        jsonb json_v "JSON值"
+        timestamp updated_at "更新时间"
+    }
+    
+    TB_ALARM {
+        string id PK "告警ID"
+        string tenant_id FK "租户ID"
+        string originator_id "源实体ID"
+        string type "告警类型"
+        string severity "严重程度"
+        string status "状态"
+        timestamp start_ts "开始时间"
+        timestamp end_ts "结束时间"
+        jsonb details "详情"
+    }
+```

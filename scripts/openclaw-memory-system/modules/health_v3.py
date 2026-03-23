@@ -152,7 +152,8 @@ class HealthChecker:
         """
         统计指定日期的 session 数量
         
-        实现: 直接读取 sessions/ 目录
+        实现: 直接读取 sessions/ 目录，检查文件内容中的日期
+        格式: 2026-03-22T02:39:53.523Z (ISO 8601)
         """
         count = 0
         
@@ -163,12 +164,16 @@ class HealthChecker:
             if not session_file.name.endswith('.jsonl'):
                 continue
             
+            # 跳过 .reset. 和 .deleted. 文件（这些是备份/重置文件）
+            if '.reset.' in session_file.name or '.deleted.' in session_file.name:
+                continue
+            
             try:
                 with open(session_file, 'r', encoding='utf-8') as f:
-                    for line in f:
-                        if date in line:
-                            count += 1
-                            break
+                    content = f.read()
+                    # 检查是否包含指定日期 (YYYY-MM-DD 格式)
+                    if date in content:
+                        count += 1
             except:
                 continue
         
@@ -178,10 +183,16 @@ class HealthChecker:
         """
         统计已记录的 session 数量
         
-        从 memory 内容中统计
+        从 memory 内容中统计 - 匹配实际的 Session 列表格式
+        格式: - `session-id`: 共 X 轮对话
         """
         import re
-        return len(re.findall(r'\*\*Session\*\*:', content))
+        # 匹配 session ID 格式: - `uuid`:
+        count = len(re.findall(r'- `[a-f0-9-]{36}`:', content))
+        if count == 0:
+            # 备选格式: **Session** 标记
+            count = len(re.findall(r'\*\*Session', content))
+        return count
     
     def _check_data_freshness(self) -> Dict:
         """
@@ -253,18 +264,19 @@ class HealthChecker:
                 'alert': '⚠️ 索引一致性: INDEX.md 不存在'
             }
         
-        # 统计 INDEX.md 中的记忆数（支持多种格式）
+        # 统计 INDEX.md 中的主记忆数（纯日期格式 YYYY-MM-DD）
         import re
-        # 格式1: 表格格式 | 2026-03-13 | [2026-03-13.md](./2026-03-13.md) | Friday |
-        # 格式2: 列表格式 - **2026-03-13** 或 **2026-03-13-xxx**
-        index_memories = len(re.findall(r'\| (\d{4}-\d{2}-\d{2}) \|', index_content))
-        if index_memories == 0:
-            # 尝试旧格式
-            index_memories = len(re.findall(r'- \*\*\d{4}-\d{2}-\d{2}[^\*]*\*\*', index_content))
+        # 匹配 - **2026-03-13** 格式（纯日期，后面跟 [ 或 空格或换行）
+        index_memories = len(re.findall(r'- \*\*\d{4}-\d{2}-\d{2}\*\*', index_content))
         
-        # 统计实际记忆文件数（排除 INDEX.md 本身）
+        # 统计实际主记忆文件数（纯日期格式 YYYY-MM-DD.md）
         memory_dir = Path(self.paths.get('memory', ''))
-        actual_memories = len([f for f in memory_dir.glob('2026-*.md') if f.name != 'INDEX.md']) if memory_dir.exists() else 0
+        if memory_dir.exists():
+            # 只统计纯日期格式的主记忆文件
+            actual_memories = len([f for f in memory_dir.glob('2026-*.md') 
+                                   if re.match(r'^\d{4}-\d{2}-\d{2}\.md$', f.name)])
+        else:
+            actual_memories = 0
         
         if index_memories == actual_memories:
             return {

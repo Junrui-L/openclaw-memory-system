@@ -12,7 +12,7 @@ import os
 import logging
 import logging.handlers
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # 尝试导入yaml，如果不存在则使用json
 try:
@@ -97,8 +97,8 @@ def get_default_config():
     }
 
 
-def setup_logging(config: dict) -> logging.Logger:
-    """设置日志系统"""
+def setup_logging(config: dict, command: str = None) -> logging.Logger:
+    """设置日志系统 - 支持按日期和任务分文件"""
     log_config = config.get('logging', {})
     log_level = getattr(logging, log_config.get('level', 'INFO').upper(), logging.INFO)
     
@@ -119,30 +119,54 @@ def setup_logging(config: dict) -> logging.Logger:
     console_handler.setFormatter(console_format)
     logger.addHandler(console_handler)
     
-    # 文件handler（带轮转）
+    # 文件handler（按日期和任务分文件）
     logs_dir = Path(config.get('paths', {}).get('logs', ''))
     if logs_dir.exists():
-        log_file = logs_dir / 'memory_manager.log'
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # 1. 主日志文件（保留，用于快速查看最近日志）
+        main_log = logs_dir / 'memory_manager.log'
         max_bytes = log_config.get('max_bytes', 10485760)  # 10MB
         backup_count = log_config.get('backup_count', 5)
         
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file, maxBytes=max_bytes, backupCount=backup_count,
+        main_handler = logging.handlers.RotatingFileHandler(
+            main_log, maxBytes=max_bytes, backupCount=backup_count,
             encoding='utf-8'
         )
-        file_handler.setLevel(log_level)
-        file_format = logging.Formatter(
+        main_handler.setLevel(log_level)
+        main_format = logging.Formatter(
             '[%(asctime)s] %(levelname)s [%(filename)s:%(lineno)d]: %(message)s',
             datefmt='%Y-%m-%d %H:%M:%S'
         )
-        file_handler.setFormatter(file_format)
-        logger.addHandler(file_handler)
+        main_handler.setFormatter(main_format)
+        logger.addHandler(main_handler)
+        
+        # 2. 按日期分文件（所有任务聚合）
+        daily_dir = logs_dir / 'daily'
+        daily_dir.mkdir(exist_ok=True)
+        daily_log = daily_dir / f'{today}.log'
+        
+        daily_handler = logging.FileHandler(daily_log, encoding='utf-8')
+        daily_handler.setLevel(log_level)
+        daily_handler.setFormatter(main_format)
+        logger.addHandler(daily_handler)
+        
+        # 3. 按任务分文件（如果指定了命令）
+        if command:
+            task_dir = logs_dir / 'tasks'
+            task_dir.mkdir(exist_ok=True)
+            task_log = task_dir / f'{command}.log'
+            
+            task_handler = logging.FileHandler(task_log, encoding='utf-8')
+            task_handler.setLevel(log_level)
+            task_handler.setFormatter(main_format)
+            logger.addHandler(task_handler)
     
     return logger
 
 
 def cmd_daily(config, args):
-    """每日归档命令 - v3.1 更新版"""
+    """每日归档命令 - v3.2 更新版"""
     print("📅 执行每日归档...")
     print("=" * 50)
 
@@ -182,12 +206,47 @@ def cmd_daily(config, args):
     else:
         print("⚠️ v3.0 模块不可用，跳过 Sessions 提取")
 
+    # 3. 提取关键事件并生成存储脚本（v3.2 新增）
+    print("\n🔍 提取关键事件...")
+    if V3_AVAILABLE:
+        try:
+            from modules.event_extractor import EventExtractor
+            extractor = EventExtractor(config)
+            
+            # 提取昨天的事件（因为今天的会话可能还未结束）
+            yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+            events = extractor.extract_events_from_sessions(yesterday)
+            
+            if events:
+                # 保存事件摘要
+                extractor.save_events_to_file(events, yesterday)
+                
+                # 生成存储脚本
+                from modules.lancedb_sync import LanceDBSync
+                sync = LanceDBSync(config)
+                script_path = sync.generate_daily_memory_store(yesterday)
+                
+                if script_path:
+                    print(f"✅ 事件存储脚本已生成: {script_path}")
+                    print(f"   提取到 {len(events)} 个关键事件")
+                    print(f"   请手动执行脚本完成存储")
+            else:
+                print(f"ℹ️ {yesterday} 无关键事件")
+                
+        except Exception as e:
+            print(f"⚠️ 事件提取失败: {e}")
+            import traceback
+            traceback.print_exc()
+    else:
+        print("⚠️ v3.0 模块不可用，跳过事件提取")
+
     print("=" * 50)
     print("✅ 每日归档完成")
     print("")
     print("📁 输出文件:")
     print("   - memory/YYYY-MM-DD.md (每日记忆 + Sessions 统计)")
     print("   - memory/session-daily-YYYY-MM-DD.md (详细对话记录，可搜索)")
+    print("   - memory/events-YYYY-MM-DD.md (关键事件摘要，v3.2新增)")
 
 
 def cmd_maintenance(config, args):
@@ -231,12 +290,23 @@ def cmd_health(config, args):
         from modules.health import HealthChecker
         checker = HealthChecker(config)
     
-    checker.check()
+    results = checker.check()
     
-    print("=" * 50)
-    print("✅ 健康检查完成")
-    checker.check(config, args)
+    # 打印详细结果
+    print()
+    print("📊 健康检查详细结果:")
+    print("-" * 50)
+    for check in results.get('checks', []):
+        status = "✅" if check.get('status') == 'ok' else "⚠️" if check.get('status') == 'warning' else "❌"
+        print(f"  {status} {check.get('name', 'Unknown')}: {check.get('message', '')}")
     
+    if results.get('alerts'):
+        print()
+        print("🚨 告警信息:")
+        for alert in results['alerts']:
+            print(f"  - {alert}")
+    
+    print()
     print("=" * 50)
     print("✅ 健康检查完成")
 
@@ -269,8 +339,12 @@ def cmd_index(config, args):
 
 def cmd_status(config, args):
     """查看状态命令"""
-    print("📈 记忆系统状态")
-    print("=" * 50)
+    # 检查是否静默模式
+    quiet_mode = getattr(args, 'quiet', False)
+    
+    if not quiet_mode:
+        print("📈 记忆系统状态")
+        print("=" * 50)
     
     # v3.0: 使用新的 HealthChecker
     if V3_AVAILABLE:
@@ -278,11 +352,24 @@ def cmd_status(config, args):
         from modules.health_v3 import HealthChecker
         reader = MemoryReader(config)
         checker = HealthChecker(reader, config)
-        checker.check()
+        results = checker.check()
+        
+        # 静默模式下只输出警告和错误
+        if quiet_mode:
+            # 只输出有问题的检查项
+            for check in results.get('checks', []):
+                if check.get('status') != 'ok':
+                    print(f"⚠️ {check.get('name')}: {check.get('message', '')}")
+            for alert in results.get('alerts', []):
+                print(f"🚨 {alert}")
     else:
         from modules.health import HealthChecker
         checker = HealthChecker(config)
-        checker.show_summary(config)
+        if quiet_mode:
+            # 静默模式：简化输出
+            pass
+        else:
+            checker.show_summary(config)
 
 
 def cmd_session_merge(config, args):
@@ -544,6 +631,8 @@ def main():
     
     # status 命令
     status_parser = subparsers.add_parser('status', help='查看状态')
+    status_parser.add_argument('--quiet', action='store_true',
+                              help='静默模式，减少日志输出')
     
     # all 命令
     all_parser = subparsers.add_parser('all', help='执行全部任务')
@@ -557,9 +646,9 @@ def main():
     # 加载配置
     config = load_config()
     
-    # 设置日志
-    logger = setup_logging(config)
-    logger.info("记忆管理系统启动")
+    # 设置日志（传入命令名，支持按任务分文件）
+    logger = setup_logging(config, args.command)
+    logger.info(f"记忆管理系统启动 | 命令: {args.command}")
     
     # 获取文件锁（防止并发执行）
     lock_acquired, lock_fd = acquire_lock(lock_file)

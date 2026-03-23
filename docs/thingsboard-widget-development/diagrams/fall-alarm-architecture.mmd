@@ -1,0 +1,73 @@
+```mermaid
+%% 跌倒告警系统整体架构图
+flowchart TB
+    subgraph Perception["感知层 (IoT Devices)"]
+        Sensor1["跌倒传感器<br/>Fall Sensor (MQTT)"]
+        Sensor2["智能手环<br/>Smart Watch (MQTT)"]
+        Sensor3["摄像头<br/>Camera (HTTP)"]
+    end
+    
+    subgraph Network["网络层"]
+        MQTT["MQTT Broker<br/>(1883/8883)"]
+    end
+    
+    subgraph Platform["ThingsBoard 平台层"]
+        subgraph RuleChain["Rule Chain 层"]
+            RootRC["Root Rule Chain<br/>• 消息路由<br/>• 协议转换<br/>• 安全认证"]
+            DeviceRC["Device-RC<br/>(设备处理)<br/>• 数据验证<br/>• 设备管理<br/>• 遥测处理"]
+            AlarmRC["Alarm-RC<br/>(告警处理)<br/>• 创建告警<br/>• 保存时间线<br/>• 通知发送"]
+        end
+        
+        subgraph Storage["数据存储层"]
+            Postgres[("PostgreSQL<br/>(主数据库)<br/>• tb_device<br/>• tb_alarm<br/>• tb_attributes<br/>• alarm_timelines")]
+            Cassandra[("Cassandra<br/>(时序数据)<br/>• ts_kv<br/>• ts_kv_latest")]
+            Redis[("Redis<br/>(缓存)<br/>• session<br/>• cache")]
+        end
+    end
+    
+    subgraph Application["应用层 (Dashboard)"]
+        Dashboard["跌倒告警监控看板"]
+        Widget1["告警列表 Widget"]
+        Widget2["告警卡片 Widget"]
+        Widget3["统计图表 Widget"]
+    end
+    
+    subgraph External["外部服务层"]
+        Emergency["急救服务<br/>(120 API)"]
+        SMS["短信/电话<br/>(Twilio)"]
+        Email["邮件通知<br/>(SendGrid)"]
+    end
+    
+    %% 连接关系
+    Sensor1 --> MQTT
+    Sensor2 --> MQTT
+    Sensor3 --> MQTT
+    MQTT --> RootRC
+    RootRC --> DeviceRC
+    DeviceRC -->|"转发节点"| AlarmRC
+    DeviceRC --> Storage
+    AlarmRC --> Storage
+    AlarmRC -->|"REST API"| Postgres
+    Dashboard --> Widget1
+    Dashboard --> Widget2
+    Dashboard --> Widget3
+    Widget2 -->|"RPC 调用"| AlarmRC
+    AlarmRC --> Emergency
+    AlarmRC --> SMS
+    AlarmRC --> Email
+    
+    %% 样式
+    classDef device fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef network fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef rulechain fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef storage fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef app fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef external fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    
+    class Sensor1,Sensor2,Sensor3 device
+    class MQTT network
+    class RootRC,DeviceRC,AlarmRC rulechain
+    class Postgres,Cassandra,Redis storage
+    class Dashboard,Widget1,Widget2,Widget3 app
+    class Emergency,SMS,Email external
+```
